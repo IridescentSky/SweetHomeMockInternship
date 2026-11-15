@@ -86,15 +86,22 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param width  the width in centimeters of the new piece
    * @param depth  the depth in centimeters of the new piece
    * @param height  the height in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
    * @param movable if <code>true</code>, the new piece is movable
    * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
-   * @deprecated As of version 1.7, use constructor without <code>doorOrWindow</code> 
-   *             parameter since a catalog door and window is supposed to be an instance 
-   *             of {@link CatalogDoorOrWindow} 
+   * @deprecated As of version 1.7, use constructor without <code>doorOrWindow</code>
+   *             parameter since a catalog door and window is supposed to be an instance
+   *             of {@link CatalogDoorOrWindow}
    */
-  public CatalogPieceOfFurniture(String name, Content icon, Content model, 
-                                 float width, float depth, float height, 
-                                 boolean movable, boolean doorOrWindow) {
+  public CatalogPieceOfFurniture(
+      String name,
+      Content icon,
+      Content model,
+      float width,
+      float depth,
+      float height,
+      boolean movable,
+      boolean doorOrWindow) {
     this(null, name, null, icon, model, width, depth, height, 0, movable, doorOrWindow, 
         INDENTITY_ROTATION, null, true, null, null);
   }
@@ -599,6 +606,13 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    */
   public float getHeight() {
     return this.height;
+  }
+
+  /**
+   * Returns the volume of this piece of furniture.
+   */
+  public float getVolume() {
+    return this.width * this.height * this.depth;
   }
 
   /**
