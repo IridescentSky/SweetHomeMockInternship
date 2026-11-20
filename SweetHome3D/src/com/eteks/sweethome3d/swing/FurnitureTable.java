@@ -750,12 +750,34 @@ public class FurnitureTable extends JTable implements View, Printable {
           return headerRendererLabel;
         }
       };
-    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
-      final TableColumn tableColumn = columnModel.getColumn(columnIndex);
-      // Create a printable column from existing table column
-      TableColumn printableColumn = new TableColumn();
-      printableColumn.setIdentifier(tableColumn.getIdentifier());
-      printableColumn.setHeaderValue(tableColumn.getHeaderValue());
+
+      // Building a source list
+      List<TableColumn> sourceColumns = new ArrayList<TableColumn>();
+      for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+        sourceColumns.add(columnModel.getColumn(columnIndex));
+      }
+
+      // Check whether Level is already in our source column list
+      boolean levelColumnFound = false;
+      for (TableColumn sourceColumn : sourceColumns) {
+        if (sourceColumn.getIdentifier() == HomePieceOfFurniture.SortableProperty.LEVEL) {
+          levelColumnFound = true;
+          break;
+        }
+      }
+
+      if (!levelColumnFound) {
+        TableColumn levelColumn = ((FurnitureTableColumnModel)columnModel).availableColumns.get(HomePieceOfFurniture.SortableProperty.LEVEL);
+        sourceColumns.add(levelColumn);
+      }
+
+      for (int columnIndex = 0, n = sourceColumns.size(); columnIndex < n; columnIndex++) {
+        final TableColumn tableColumn = sourceColumns.get(columnIndex);
+        // Create a printable column from existing table column
+        TableColumn printableColumn = new TableColumn();
+        printableColumn.setIdentifier(tableColumn.getIdentifier());
+        printableColumn.setHeaderValue(tableColumn.getHeaderValue());
+        printableColumn.setPreferredWidth(tableColumn.getPreferredWidth());
       TableCellRenderer printableCellRenderer = new TableCellRenderer() {
           public Component getTableCellRendererComponent(JTable table, Object value, 
                                  boolean isSelected, boolean hasFocus, int row, int column) {
@@ -793,20 +815,27 @@ public class FurnitureTable extends JTable implements View, Printable {
     if (EventQueue.isDispatchThread()) {
       TableColumnModel oldColumnModel = getColumnModel();
       Color oldGridColor = getGridColor();
-      setColumnModel(printableColumnModel);   
-      if (OperatingSystem.isWindows()) {
-        // Add 3 pixels to columns to get a correct rendering
-        updateTableColumnsWidth(3);
-      } else {
-        updateTableColumnsWidth(0);
+
+      try {
+        setColumnModel(printableColumnModel);
+        if (OperatingSystem.isWindows()) {
+          // Add 3 pixels to columns to get a correct rendering
+          updateTableColumnsWidth(3);
+        } else {
+          updateTableColumnsWidth(0);
+        }
+        setGridColor(gridColor);
+        Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
+        int pageExists = printable.print(g, pageFormat, pageIndex);
+
+        return pageExists;
       }
-      setGridColor(gridColor);
-      Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
-      int pageExists = printable.print(g, pageFormat, pageIndex);
-      // Restore column model and grid color to their previous values
-      setColumnModel(oldColumnModel);
-      setGridColor(oldGridColor);
-      return pageExists;
+      finally{
+        // Restore column model and grid color to their previous values
+        setColumnModel(oldColumnModel);
+        setGridColor(oldGridColor);
+      }
+
     } else {
       // Print synchronously table in Event Dispatch Thread
       // The best solution should be to be able to print out of Event Dispatch Thread
@@ -816,7 +845,7 @@ public class FurnitureTable extends JTable implements View, Printable {
         int pageExists;
         PrinterException exception;
       }
-      
+
       final RunnableContext context = new RunnableContext();
       try {
         EventQueue.invokeAndWait(new Runnable() {
